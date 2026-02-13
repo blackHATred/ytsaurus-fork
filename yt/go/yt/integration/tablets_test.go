@@ -23,7 +23,6 @@ import (
 	"go.ytsaurus.tech/yt/go/yt"
 	"go.ytsaurus.tech/yt/go/yt/ythttp"
 	"go.ytsaurus.tech/yt/go/yt/ytrpc"
-	"go.ytsaurus.tech/yt/go/yttest"
 )
 
 func TestGenerateTimestamp(t *testing.T) {
@@ -54,6 +53,7 @@ func TestTabletClient(t *testing.T) {
 		{Name: "DeleteRows_empty", Test: suite.TestDeleteRows_empty},
 		{Name: "InsertRowsBatch", Test: suite.TestInsertRowsBatch},
 		{Name: "LookupRows_map", Test: suite.TestLookupRows_map, SkipRPC: true}, // todo https://st.yandex-team.ru/YT-15505
+		{Name: "LockRows", Test: suite.TestLockRows},
 		{Name: "MultiLookupRows_Basic", Test: suite.TestMultiLookupRows_Basic, SkipHTTP: true},
 		{Name: "MultiLookupRows_WithKeepMissingRows", Test: suite.TestMultiLookupRows_WithKeepMissingRows, SkipHTTP: true},
 		{Name: "MultiLookupRows_WithColumns", Test: suite.TestMultiLookupRows_WithColumns, SkipHTTP: true},
@@ -597,33 +597,31 @@ func TestAbortCommittedTabletTx(t *testing.T) {
 	}
 }
 
-func TestLockRows(t *testing.T) { // todo rewrite as suite test after LockRows is implemented in rpc client
+func (s *Suite) TestLockRows(ctx context.Context, t *testing.T, yc yt.Client) {
 	t.Parallel()
 
-	env := yttest.New(t)
-
-	testTable := env.TmpPath().Child("table")
+	testTable := tmpPath().Child("table")
 
 	sc := schema.MustInfer(&testRow{})
 	sc.Columns[1].Lock = "lock"
-	require.NoError(t, migrate.Create(env.Ctx, env.YT, testTable, sc))
-	require.NoError(t, migrate.MountAndWait(env.Ctx, env.YT, testTable))
+	require.NoError(t, migrate.Create(ctx, yc, testTable, sc))
+	require.NoError(t, migrate.MountAndWait(ctx, yc, testTable))
 
 	row := []any{&testRow{"foo", "1"}}
 	key := []any{&testKey{"foo"}}
 
-	require.NoError(t, env.YT.InsertRows(env.Ctx, testTable, row, nil))
+	require.NoError(t, yc.InsertRows(ctx, testTable, row, nil))
 
-	tx0, err := env.YT.BeginTabletTx(env.Ctx, nil)
+	tx0, err := yc.BeginTabletTx(ctx, nil)
 	require.NoError(t, err)
 
-	tx1, err := env.YT.BeginTabletTx(env.Ctx, nil)
+	tx1, err := yc.BeginTabletTx(ctx, nil)
 	require.NoError(t, err)
 
-	require.NoError(t, tx1.InsertRows(env.Ctx, testTable, row, nil))
+	require.NoError(t, tx1.InsertRows(ctx, testTable, row, nil))
 	require.NoError(t, tx1.Commit())
 
-	require.NoError(t, tx0.LockRows(env.Ctx, testTable, []string{"lock"}, yt.LockTypeSharedStrong, key, nil))
+	require.NoError(t, tx0.LockRows(ctx, testTable, []string{"lock"}, yt.LockTypeSharedStrong, key, nil))
 	require.Error(t, tx0.Commit())
 }
 

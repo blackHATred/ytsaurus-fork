@@ -5,6 +5,8 @@ import (
 	"io"
 
 	"github.com/golang/protobuf/proto"
+	"go.ytsaurus.tech/yt/go/proto/client/tablet_client"
+	"go.ytsaurus.tech/yt/go/schema"
 
 	"go.ytsaurus.tech/library/go/core/xerrors"
 	"go.ytsaurus.tech/library/go/ptr"
@@ -665,8 +667,64 @@ func (e *Encoder) LockRows(
 		return nil
 	}
 
-	// todo convert (lock group + type) for api_service.cpp, need table mount cache for that?
-	return xerrors.New("implement me")
+	if opts == nil {
+		opts = &yt.LockRowsOptions{}
+	}
+
+	// Get table schema to map lock groups to indices
+	var attrs struct {
+		Schema schema.Schema `yson:"schema"`
+	}
+	err = e.GetNode(ctx, path.YPath().Attrs(), &attrs, &yt.GetNodeOptions{
+		Attributes:         []string{"schema"},
+		TransactionOptions: opts.TransactionOptions,
+	})
+	if err != nil {
+		return xerrors.Errorf("failed to get table schema for lock_rows: %w", err)
+	}
+
+	// Build lock mask
+	lockMask, err := buildLockMask(&attrs.Schema, locks, lockType)
+	if err != nil {
+		return xerrors.Errorf("failed to build lock mask: %w", err)
+	}
+
+	// Serialize keys to wire format
+	attachments, descriptor, err := encodeToWire(keys)
+	if err != nil {
+		return xerrors.Errorf("unable to encode keys into wire format: %w", err)
+	}
+
+	// Create modification types array (RMT_MODIFY = WriteAndLock for each key)
+	modificationTypes := make([]rpc_proxy.ERowModificationType, len(keys))
+	for i := 0; i < len(keys); i++ {
+		modificationTypes[i] = rpc_proxy.ERowModificationType_RMT_MODIFY
+	}
+
+	// Create row locks array (same lock mask for each key)
+	rowLocks := make([]*tablet_client.TLockMask, len(keys))
+	for i := 0; i < len(keys); i++ {
+		rowLocks[i] = lockMask
+	}
+
+	req := &rpc_proxy.TReqModifyRows{
+		SequenceNumber:       nil, // todo
+		TransactionId:        getTxID(opts.TransactionOptions),
+		Path:                 []byte(path.String()),
+		RowModificationTypes: modificationTypes,
+		RowLegacyReadLocks:   nil, // deprecated
+		RowLegacyLocks:       nil, // deprecated
+		RowLocks:             rowLocks,
+		RequireSyncReplica:   nil,
+		UpstreamReplicaId:    nil,
+		RowsetDescriptor:     descriptor,
+	}
+
+	call := e.newCall(MethodModifyRows, NewLockRowsRequest(req), attachments)
+	var rsp rpc_proxy.TRspModifyRows
+	err = e.Invoke(ctx, call, &rsp)
+
+	return
 }
 
 func (e *Encoder) PushQueueProducerBatch(
@@ -2446,4 +2504,108 @@ func (e *Encoder) AlterQuery(
 func (e *Encoder) NewBatchRequest() (req yt.BatchRequest, err error) {
 	err = xerrors.New("method NewBatchRequest is not implemented")
 	return
+}
+
+// buildLocksMapping creates a mapping from lock group names to lock indices.
+// This is equivalent to GetLocksMapping from C++ SDK.
+// Lock index 0 is always reserved for the primary lock.
+func buildLocksMapping(tableSchema *schema.Schema) map[string]int32 {
+	groupToIndex := make(map[string]int32)
+	lockIndex := int32(1) // Start from 1, as 0 is reserved for primary lock
+
+	// Count key columns (columns with sort order)
+	keyColumnCount := 0
+	for _, column := range tableSchema.Columns {
+		if column.SortOrder != schema.SortNone {
+			keyColumnCount++
+		}
+	}
+
+	// Process only value columns (skip key columns)
+	for i := keyColumnCount; i < len(tableSchema.Columns); i++ {
+		column := &tableSchema.Columns[i]
+		if column.Lock != "" {
+			if _, exists := groupToIndex[column.Lock]; !exists {
+				groupToIndex[column.Lock] = lockIndex
+				lockIndex++
+			}
+		}
+	}
+
+	return groupToIndex
+}
+
+// lockTypeToInt converts yt.LockType to integer representation for bitmap encoding.
+// Matches ELockType enum from C++:
+// None = 0, SharedWeak = 1, SharedStrong = 2, Exclusive = 3, SharedWrite = 4
+func lockTypeToInt(lockType yt.LockType) uint64 {
+	switch lockType {
+	case yt.LockTypeNone:
+		return 0
+	case yt.LockTypeSharedWeak:
+		return 1
+	case yt.LockTypeSharedStrong:
+		return 2
+	case yt.LockTypeExclusive:
+		return 3
+	default:
+		return 0
+	}
+}
+
+// buildLockMask creates a TLockMask protobuf message based on lock groups and lock type.
+// This is equivalent to GetLockMask from C++ SDK.
+func buildLockMask(tableSchema *schema.Schema, locks []string, lockType yt.LockType) (*tablet_client.TLockMask, error) {
+	const (
+		bitsPerType      = 4  // Each lock type occupies 4 bits
+		locksPerWord     = 16 // 64 bits / 4 bits = 16 locks per uint64
+		primaryLockIndex = 0
+	)
+
+	lockTypeValue := lockTypeToInt(lockType)
+
+	// If no specific lock groups specified, lock only the primary lock
+	if len(locks) == 0 {
+		bitmap := []uint64{lockTypeValue} // Set primary lock (index 0) in first word
+		size := int32(1)
+		return &tablet_client.TLockMask{
+			Bitmap: bitmap,
+			Size:   &size,
+		}, nil
+	}
+
+	// Build mapping from lock group names to indices
+	groupToIndex := buildLocksMapping(tableSchema)
+
+	// Find the maximum lock index we need to support
+	maxIndex := int32(primaryLockIndex)
+	lockIndices := make([]int32, 0, len(locks))
+
+	for _, lockName := range locks {
+		index, found := groupToIndex[lockName]
+		if !found {
+			return nil, xerrors.Errorf("lock group %q not found in table schema", lockName)
+		}
+		lockIndices = append(lockIndices, index)
+		if index > maxIndex {
+			maxIndex = index
+		}
+	}
+
+	// Calculate bitmap size
+	size := maxIndex + 1
+	wordCount := (int(size) + locksPerWord - 1) / locksPerWord
+	bitmap := make([]uint64, wordCount)
+
+	// Set bits for each lock
+	for _, index := range lockIndices {
+		wordIndex := int(index) / locksPerWord
+		wordPosition := int(index) % locksPerWord
+		bitmap[wordIndex] |= lockTypeValue << (bitsPerType * wordPosition)
+	}
+
+	return &tablet_client.TLockMask{
+		Bitmap: bitmap,
+		Size:   &size,
+	}, nil
 }
