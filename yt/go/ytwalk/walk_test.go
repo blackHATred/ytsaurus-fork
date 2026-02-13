@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yttest"
-	"go.ytsaurus.tech/yt/go/ytwalk"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ytwalk"
 )
 
 type testNode struct {

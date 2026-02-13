@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/schema"
 )
 
 type innterStruct struct {

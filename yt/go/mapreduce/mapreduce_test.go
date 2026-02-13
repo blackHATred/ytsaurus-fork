@@ -1,6 +1,6 @@
 package mapreduce_test
 
-import "go.ytsaurus.tech/yt/go/mapreduce"
+import "github.com/blackHATred/ytsaurus-fork/yt/go/mapreduce"
 
 type WordCount struct {
 	mapreduce.Untyped

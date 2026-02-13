@@ -3,7 +3,7 @@ package yt
 import (
 	"context"
 
-	"go.ytsaurus.tech/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
 )
 
 // BatchRequest allows to send multiple lightweight requests at once significantly reducing time of their execution.

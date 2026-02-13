@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 )
 
 // BlobTableReader allows reading YT blob tables.

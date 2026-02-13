@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 	"go.ytsaurus.tech/library/go/blockcodecs"
-	"go.ytsaurus.tech/yt/go/yt"
 )
 
 type rowBatch struct {

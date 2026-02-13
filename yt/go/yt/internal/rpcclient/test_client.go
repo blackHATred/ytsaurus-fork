@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"go.ytsaurus.tech/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 )
 
 // NewTestClient creates new rpc client from config to be used in integration tests.

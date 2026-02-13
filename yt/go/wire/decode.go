@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 	"go.ytsaurus.tech/library/go/core/xerrors"
-	"go.ytsaurus.tech/yt/go/schema"
-	"go.ytsaurus.tech/yt/go/yson"
 )
 
 type field struct {

@@ -6,11 +6,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"go.ytsaurus.tech/yt/go/migrate"
-	"go.ytsaurus.tech/yt/go/schema"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yson"
-	"go.ytsaurus.tech/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/migrate"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 )
 
 func TestTableBackupClient(t *testing.T) {

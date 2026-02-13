@@ -11,9 +11,9 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"go.ytsaurus.tech/yt/go/schema"
-	"go.ytsaurus.tech/yt/go/skiff"
-	"go.ytsaurus.tech/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/skiff"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 )
 
 func (c *jobContext) initPipes(nOutputPipes int) error {

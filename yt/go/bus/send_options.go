@@ -5,12 +5,12 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/compression"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/rpc"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/tracing"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/compression"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/core/misc"
-	"go.ytsaurus.tech/yt/go/proto/core/rpc"
-	"go.ytsaurus.tech/yt/go/proto/core/tracing"
 )
 
 type SendOption interface {

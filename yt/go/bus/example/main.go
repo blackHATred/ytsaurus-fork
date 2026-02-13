@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	"go.ytsaurus.tech/yt/go/bus"
-	"go.ytsaurus.tech/yt/go/proto/client/api/rpc_proxy"
-	"go.ytsaurus.tech/yt/go/ytlog"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/api/rpc_proxy"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ytlog"
 )
 
 var (

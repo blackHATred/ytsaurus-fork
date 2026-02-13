@@ -3,10 +3,10 @@ package httpclient
 import (
 	"io"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/skiff"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 	"go.ytsaurus.tech/library/go/core/xerrors"
-	"go.ytsaurus.tech/yt/go/skiff"
-	"go.ytsaurus.tech/yt/go/yson"
-	"go.ytsaurus.tech/yt/go/yt"
 )
 
 type tableWriter struct {

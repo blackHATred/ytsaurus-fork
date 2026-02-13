@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 	"go.ytsaurus.tech/library/go/core/log"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 func NewReader(

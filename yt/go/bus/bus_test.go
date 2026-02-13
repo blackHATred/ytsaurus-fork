@@ -16,7 +16,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"go.ytsaurus.tech/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
 )
 
 func connPair() (a, b net.Conn, err error) {

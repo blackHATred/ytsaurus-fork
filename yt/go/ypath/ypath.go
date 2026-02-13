@@ -8,7 +8,7 @@ package ypath
 import (
 	"fmt"
 
-	"go.ytsaurus.tech/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 )
 
 // Path is ypath in simple text form.

@@ -7,15 +7,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/httpclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/log/ctxlog"
 	"go.ytsaurus.tech/library/go/core/xerrors"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/schema"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/internal/httpclient"
-	"go.ytsaurus.tech/yt/go/yttest"
 )
 
 type exampleRow struct {

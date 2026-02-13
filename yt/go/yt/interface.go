@@ -36,12 +36,12 @@ import (
 	"context"
 	"io"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 	"go.ytsaurus.tech/library/go/core/xerrors"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/schema"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yson"
-	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 //go:generate internal/yt-gen-client/yt-gen-client -interface interface.go -interface internal/interface.go -output internal/params_gen.go

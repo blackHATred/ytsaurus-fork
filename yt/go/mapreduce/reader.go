@@ -4,10 +4,10 @@ import (
 	"io"
 	"reflect"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/skiff"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 	"go.ytsaurus.tech/library/go/core/xerrors"
-	"go.ytsaurus.tech/yt/go/schema"
-	"go.ytsaurus.tech/yt/go/skiff"
-	"go.ytsaurus.tech/yt/go/yson"
 )
 
 // Reader represents input of the job.

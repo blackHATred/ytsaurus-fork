@@ -7,7 +7,7 @@
 package bus
 
 import (
-	misc "go.ytsaurus.tech/yt/go/proto/core/misc"
+	misc "github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

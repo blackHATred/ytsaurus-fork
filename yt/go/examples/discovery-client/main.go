@@ -6,10 +6,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/ytdiscovery"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/yson"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/ytdiscovery"
 )
 
 type addr struct {

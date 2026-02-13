@@ -10,11 +10,11 @@ import (
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 
-	"go.ytsaurus.tech/yt/go/schema"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/ytjaeger"
-	"go.ytsaurus.tech/yt/go/yttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/ytjaeger"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 )
 
 func TestTracing(t *testing.T) {

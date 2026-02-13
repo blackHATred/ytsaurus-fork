@@ -3,10 +3,10 @@ package discoveryclient
 import (
 	"context"
 
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/client/discovery_client"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/internal/rpcclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/discovery_client"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/rpcclient"
 )
 
 type Encoder struct {

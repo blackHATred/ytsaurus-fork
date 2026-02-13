@@ -12,13 +12,13 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
-	"go.ytsaurus.tech/yt/go/bus"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/clienttest"
-	"go.ytsaurus.tech/yt/go/yt/internal/httpclient"
-	"go.ytsaurus.tech/yt/go/yt/internal/rpcclient"
-	"go.ytsaurus.tech/yt/go/yttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/clienttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/httpclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/rpcclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 )
 
 func TestCrossCellCommandsRetries(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"go.ytsaurus.tech/yt/go/proto/core/rpc"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/rpc"
 )
 
 const (

@@ -9,15 +9,15 @@ import (
 
 	"golang.org/x/xerrors"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/api/rpc_proxy"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/ytree"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/client/api/rpc_proxy"
-	"go.ytsaurus.tech/yt/go/proto/core/misc"
-	"go.ytsaurus.tech/yt/go/proto/core/ytree"
-	"go.ytsaurus.tech/yt/go/yson"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/internal"
-	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 // unexpectedStatusCode is last effort attempt to get useful error message from a failed request.

@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/ytdiscovery"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/ytdiscovery"
-	"go.ytsaurus.tech/yt/go/yttest"
 )
 
 const leaseTimeoutMicroseconds = 60 * 1000 * 1000

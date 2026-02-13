@@ -3,9 +3,9 @@ package schema
 import (
 	"fmt"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/api/rpc_proxy"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/proto/client/api/rpc_proxy"
-	"go.ytsaurus.tech/yt/go/yson"
 )
 
 func ConvertFromProto(rpcSchema *rpc_proxy.TTableSchema) (Schema, error) {

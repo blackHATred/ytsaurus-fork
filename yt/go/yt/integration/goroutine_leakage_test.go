@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/clienttest"
-	"go.ytsaurus.tech/yt/go/yttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/clienttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 )
 
 func TestClientGoroutineLeakage(t *testing.T) {

@@ -9,13 +9,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus/tcptest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/compression"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
+	testservice "github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/rpc/unittests"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/bus/tcptest"
-	"go.ytsaurus.tech/yt/go/compression"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/core/misc"
-	testservice "go.ytsaurus.tech/yt/go/proto/core/rpc/unittests"
-	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 type TestFeature int32

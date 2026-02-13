@@ -4,9 +4,9 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ytlog/selfrotate"
 	logzap "go.ytsaurus.tech/library/go/core/log/zap"
 	"go.ytsaurus.tech/library/go/core/log/zap/asynczap"
-	"go.ytsaurus.tech/yt/go/ytlog/selfrotate"
 )
 
 // New returns synchronous stderr logger configured with YT defaults.

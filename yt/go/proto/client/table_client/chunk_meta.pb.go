@@ -7,8 +7,8 @@
 package table_client
 
 import (
-	table_chunk_format "go.ytsaurus.tech/yt/go/proto/client/table_chunk_format"
-	misc "go.ytsaurus.tech/yt/go/proto/core/misc"
+	table_chunk_format "github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/table_chunk_format"
+	misc "github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

@@ -1,8 +1,8 @@
 package discoveryclient
 
 import (
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/discovery_client"
 	"go.ytsaurus.tech/library/go/core/log"
-	"go.ytsaurus.tech/yt/go/proto/client/discovery_client"
 )
 
 type ListMembersRequest struct {

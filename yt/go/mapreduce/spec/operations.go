@@ -1,6 +1,6 @@
 package spec
 
-import "go.ytsaurus.tech/yt/go/yt"
+import "github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 
 func Map() *Spec {
 	spec := &Spec{}

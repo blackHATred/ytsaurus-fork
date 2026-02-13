@@ -12,12 +12,12 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/xerrors"
-	"go.ytsaurus.tech/yt/go/bus"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/internal"
-	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 const ProtocolVersionMajor = 1

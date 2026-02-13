@@ -10,17 +10,17 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/clienttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/httpclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/rpcclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/log/ctxlog"
 	"go.ytsaurus.tech/library/go/core/xerrors"
-	"go.ytsaurus.tech/yt/go/bus"
-	"go.ytsaurus.tech/yt/go/yson"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/clienttest"
-	"go.ytsaurus.tech/yt/go/yt/internal/httpclient"
-	"go.ytsaurus.tech/yt/go/yt/internal/rpcclient"
-	"go.ytsaurus.tech/yt/go/yterrors"
-	"go.ytsaurus.tech/yt/go/yttest"
 )
 
 func TestTransactions(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strconv"
 
-	"go.ytsaurus.tech/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 )
 
 const (

@@ -3,9 +3,9 @@ package ytdiscovery
 import (
 	"golang.org/x/xerrors"
 
-	"go.ytsaurus.tech/yt/go/mapreduce"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/internal/discoveryclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/mapreduce"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/discoveryclient"
 )
 
 func checkNotInsideJob(c *yt.DiscoveryConfig) error {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"go.ytsaurus.tech/yt/go/yterrors"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 )
 
 type ErrorWrapper struct{}

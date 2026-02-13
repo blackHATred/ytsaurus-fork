@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"go.ytsaurus.tech/yt/go/dockertest"
-	"go.ytsaurus.tech/yt/go/mapreduce"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/dockertest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/mapreduce"
 )
 
 func TestMain(m *testing.M) {

@@ -10,7 +10,7 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"go.ytsaurus.tech/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 )
 
 type Encoder struct {

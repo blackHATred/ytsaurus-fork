@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"go.ytsaurus.tech/yt/go/yterrors"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 )
 
 func NewHTTPError(statusCode int, headers http.Header, body []byte) error {

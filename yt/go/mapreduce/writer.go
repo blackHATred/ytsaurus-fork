@@ -3,8 +3,8 @@ package mapreduce
 import (
 	"io"
 
-	"go.ytsaurus.tech/yt/go/skiff"
-	"go.ytsaurus.tech/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/skiff"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 )
 
 // Writer is single output of mapreduce job.

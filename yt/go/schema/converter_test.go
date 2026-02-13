@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/api/rpc_proxy"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/proto/client/api/rpc_proxy"
 )
 
 func TestConvertFromProto_SimpleColumn(t *testing.T) {

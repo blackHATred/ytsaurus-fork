@@ -9,8 +9,8 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"go.ytsaurus.tech/yt/go/mapreduce/spec"
-	"go.ytsaurus.tech/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/mapreduce/spec"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 )
 
 func jobCommand(job any, outputPipes int) string {

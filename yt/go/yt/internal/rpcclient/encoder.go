@@ -4,18 +4,18 @@ import (
 	"context"
 	"io"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/tablet_client"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/schema"
 	"github.com/golang/protobuf/proto"
-	"go.ytsaurus.tech/yt/go/proto/client/tablet_client"
-	"go.ytsaurus.tech/yt/go/schema"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/api/rpc_proxy"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 	"go.ytsaurus.tech/library/go/core/xerrors"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/client/api/rpc_proxy"
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yson"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 // Encoder is adapter between typed and untyped layer of API.

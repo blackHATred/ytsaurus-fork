@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"go.ytsaurus.tech/yt/go/dockertest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/dockertest"
 )
 
 func TestMain(m *testing.M) {

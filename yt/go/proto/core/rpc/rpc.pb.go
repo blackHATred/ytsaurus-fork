@@ -7,8 +7,8 @@
 package rpc
 
 import (
-	misc "go.ytsaurus.tech/yt/go/proto/core/misc"
-	tracing "go.ytsaurus.tech/yt/go/proto/core/tracing"
+	misc "github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
+	tracing "github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/tracing"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

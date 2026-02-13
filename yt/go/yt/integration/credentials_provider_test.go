@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/xerrors"
 
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/ytrpc"
-	"go.ytsaurus.tech/yt/go/yttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/ytrpc"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 )
 
 func TestCredentialsProviderBasic(t *testing.T) {

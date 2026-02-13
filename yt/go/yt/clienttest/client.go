@@ -6,10 +6,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/ythttp"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/ytrpc"
 	"go.ytsaurus.tech/library/go/core/log"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/ythttp"
-	"go.ytsaurus.tech/yt/go/yt/ytrpc"
 )
 
 func NewHTTPClient(t *testing.T, l log.Structured) yt.Client {

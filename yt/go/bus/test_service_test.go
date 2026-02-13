@@ -14,9 +14,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
-	"go.ytsaurus.tech/yt/go/bus/tcptest"
-	testservice "go.ytsaurus.tech/yt/go/proto/core/rpc/unittests"
-	"go.ytsaurus.tech/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus/tcptest"
+	testservice "github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/rpc/unittests"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 )
 
 type PemBlobConfig struct {

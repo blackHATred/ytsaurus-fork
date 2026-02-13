@@ -8,7 +8,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 
-	"go.ytsaurus.tech/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
 )
 
 type TracingInterceptor struct {

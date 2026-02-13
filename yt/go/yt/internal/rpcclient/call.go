@@ -6,11 +6,11 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/golang/protobuf/proto"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/api/rpc_proxy"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 	"go.ytsaurus.tech/library/go/core/log"
-	"go.ytsaurus.tech/yt/go/bus"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/client/api/rpc_proxy"
-	"go.ytsaurus.tech/yt/go/yt"
 )
 
 type Call struct {

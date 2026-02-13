@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"go.ytsaurus.tech/yt/go/yterrors"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 )
 
 func TestInferV3(t *testing.T) {

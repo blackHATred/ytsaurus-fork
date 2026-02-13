@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"go.ytsaurus.tech/yt/go/yson"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 )
 
 type Inner struct {

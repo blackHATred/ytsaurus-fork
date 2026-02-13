@@ -13,13 +13,13 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/crc64"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/log/nop"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/crc64"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/core/bus"
-	"go.ytsaurus.tech/yt/go/proto/core/misc"
 )
 
 type AttributeKey string

@@ -6,9 +6,9 @@ import (
 
 	"go.uber.org/atomic"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/log/ctxlog"
-	"go.ytsaurus.tech/yt/go/yt"
 )
 
 type loggingReader struct {

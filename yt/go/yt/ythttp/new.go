@@ -7,9 +7,9 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"go.ytsaurus.tech/yt/go/mapreduce"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/internal/httpclient"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/mapreduce"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/httpclient"
 )
 
 func checkNotInsideJob(c *yt.Config) error {

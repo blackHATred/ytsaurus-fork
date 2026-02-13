@@ -1,6 +1,6 @@
 package discoveryclient
 
-import "go.ytsaurus.tech/yt/go/yt/internal/rpcclient"
+import "github.com/blackHATred/ytsaurus-fork/yt/go/yt/internal/rpcclient"
 
 const (
 	MethodListMembers  rpcclient.Method = "ListMembers"

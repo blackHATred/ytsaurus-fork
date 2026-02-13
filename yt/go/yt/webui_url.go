@@ -3,7 +3,7 @@ package yt
 import (
 	"fmt"
 
-	"go.ytsaurus.tech/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
 )
 
 func WebUITableURL(cluster string, path ypath.Path) string {

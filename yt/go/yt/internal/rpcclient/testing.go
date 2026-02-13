@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"go.ytsaurus.tech/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
 )
 
 type BusConn interface {

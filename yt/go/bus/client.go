@@ -12,15 +12,15 @@ import (
 	"github.com/golang/protobuf/proto"
 	"go.uber.org/atomic"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/compression"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/misc"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/core/rpc"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/log/nop"
 	"go.ytsaurus.tech/library/go/core/xerrors"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/compression"
-	"go.ytsaurus.tech/yt/go/guid"
-	"go.ytsaurus.tech/yt/go/proto/core/misc"
-	"go.ytsaurus.tech/yt/go/proto/core/rpc"
-	"go.ytsaurus.tech/yt/go/yterrors"
 )
 
 const (

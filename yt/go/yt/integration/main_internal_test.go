@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"go.ytsaurus.tech/yt/go/mapreduce"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/mapreduce"
 )
 
 func TestMain(m *testing.M) {

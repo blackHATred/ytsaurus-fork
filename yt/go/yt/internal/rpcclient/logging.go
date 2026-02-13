@@ -5,10 +5,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/bus"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/proto/client/api/rpc_proxy"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/log/ctxlog"
-	"go.ytsaurus.tech/yt/go/bus"
-	"go.ytsaurus.tech/yt/go/proto/client/api/rpc_proxy"
 )
 
 type LoggingInterceptor struct {

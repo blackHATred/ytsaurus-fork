@@ -7,7 +7,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"go.opentelemetry.io/otel/trace"
 
-	"go.ytsaurus.tech/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
 )
 
 // spanContextProvider is an interface that should be implemented by the bridge

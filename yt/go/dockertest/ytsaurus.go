@@ -11,7 +11,7 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"go.ytsaurus.tech/yt/go/guid"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/guid"
 )
 
 const ytsaurusPath = "/home/yt"

@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"time"
 
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yterrors"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yterrors"
 )
 
 type Operation interface {

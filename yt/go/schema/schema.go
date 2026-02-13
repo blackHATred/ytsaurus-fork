@@ -4,8 +4,8 @@ package schema
 import (
 	"reflect"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yson"
 	"go.ytsaurus.tech/library/go/ptr"
-	"go.ytsaurus.tech/yt/go/yson"
 )
 
 type Type string

@@ -1,4 +1,4 @@
-module go.ytsaurus.tech/yt/go
+module github.com/blackHATred/ytsaurus-fork/yt/go
 
 go 1.23.8
 

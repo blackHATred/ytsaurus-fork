@@ -3,8 +3,8 @@ package ytlock
 import (
 	"context"
 
-	"go.ytsaurus.tech/yt/go/ypath"
-	"go.ytsaurus.tech/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/ypath"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
 )
 
 // AbortExclusiveLock cancels transaction under exclusive lock specified by the path.

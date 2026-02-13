@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yt/clienttest"
+	"github.com/blackHATred/ytsaurus-fork/yt/go/yttest"
 	"go.ytsaurus.tech/library/go/core/log"
 	"go.ytsaurus.tech/library/go/core/log/ctxlog"
-	"go.ytsaurus.tech/yt/go/yt"
-	"go.ytsaurus.tech/yt/go/yt/clienttest"
-	"go.ytsaurus.tech/yt/go/yttest"
 )
 
 type Suite struct {
