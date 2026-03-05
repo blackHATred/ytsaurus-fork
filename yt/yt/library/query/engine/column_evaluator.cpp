@@ -13,6 +13,7 @@
 
 #include <yt/yt/client/query_client/query_statistics.h>
 
+#include <yt/yt/core/misc/hyperloglog.h>
 #include <yt/yt/core/misc/sync_cache.h>
 
 namespace NYT::NQueryClient {
@@ -80,6 +81,100 @@ void Merge(const TRowBufferPtr&, TValue* updatedState, const TValue* incomingSta
 void Finalize(const TRowBufferPtr&, TValue* value, const TValue* state, NWebAssembly::IWebAssemblyCompartment*)
 {
     *value = *state;
+}
+
+template <int Precision>
+void HllMergeStateMerge(
+    const TRowBufferPtr& buffer,
+    TValue* updatedState,
+    const TValue* incomingState,
+    NWebAssembly::IWebAssemblyCompartment*)
+{
+    if (incomingState->Type == EValueType::Null) {
+        return;
+    }
+
+    constexpr ui64 RegisterCount = (ui64)1 << Precision;
+    YT_VERIFY(incomingState->Length == RegisterCount);
+
+    if (updatedState->Type == EValueType::Null) {
+        *updatedState = buffer->CaptureValue(*incomingState);
+        return;
+    }
+
+    YT_VERIFY(updatedState->Length == RegisterCount);
+
+    // Ensure updatedState points to writable memory owned by the row buffer.
+    // We check if the data pointer is within the row buffer's managed memory.
+    // If not, capture it first.
+    auto captured = buffer->CaptureValue(*updatedState);
+    *updatedState = captured;
+
+    auto* dst = const_cast<char*>(updatedState->Data.String);
+    auto* src = incomingState->Data.String;
+
+    // Element-wise max (HLL merge).
+    for (ui64 i = 0; i < RegisterCount; ++i) {
+        auto srcVal = static_cast<ui8>(src[i]);
+        auto dstVal = static_cast<ui8>(dst[i]);
+        if (srcVal > dstVal) {
+            dst[i] = src[i];
+        }
+    }
+}
+
+template <int Precision>
+void HllMergeStateUpdate(
+    const TRowBufferPtr& buffer,
+    TValue* state,
+    TRange<TValue> incomingValues,
+    NWebAssembly::IWebAssemblyCompartment* compartment)
+{
+    for (const auto& value : incomingValues) {
+        HllMergeStateMerge<Precision>(buffer, state, &value, compartment);
+    }
+}
+
+std::optional<int> TryParseHllMergeStatePrecision(const std::string& name)
+{
+    // Match "hll_N_merge_state" where N is 7..14.
+    static constexpr TStringBuf prefix = "hll_";
+    static constexpr TStringBuf suffix = "_merge_state";
+    if (!name.starts_with(prefix) || !name.ends_with(suffix)) {
+        return std::nullopt;
+    }
+    auto middle = TStringBuf(name).SubString(prefix.size(), name.size() - prefix.size() - suffix.size());
+    int precision = 0;
+    if (!TryFromString(middle, precision) || precision < 7 || precision > 14) {
+        return std::nullopt;
+    }
+    return precision;
+}
+
+template <int Precision>
+TCGAggregateImage MakeHllMergeStateAggregate()
+{
+    TCGAggregateCallbacks callbacks;
+    callbacks.Init = BIND(Init);
+    callbacks.Update = BIND(HllMergeStateUpdate<Precision>);
+    callbacks.Merge = BIND(HllMergeStateMerge<Precision>);
+    callbacks.Finalize = BIND(Finalize);
+    return {std::move(callbacks), /*compartment*/ nullptr};
+}
+
+TCGAggregateImage MakeHllMergeStateAggregateByPrecision(int precision)
+{
+    switch (precision) {
+        case 7: return MakeHllMergeStateAggregate<7>();
+        case 8: return MakeHllMergeStateAggregate<8>();
+        case 9: return MakeHllMergeStateAggregate<9>();
+        case 10: return MakeHllMergeStateAggregate<10>();
+        case 11: return MakeHllMergeStateAggregate<11>();
+        case 12: return MakeHllMergeStateAggregate<12>();
+        case 13: return MakeHllMergeStateAggregate<13>();
+        case 14: return MakeHllMergeStateAggregate<14>();
+        default: YT_ABORT();
+    }
 }
 
 TCGAggregateImage MakeBuiltinAggregate(const std::string& name, EValueType wireType)
@@ -209,6 +304,8 @@ TColumnEvaluatorPtr TColumnEvaluator::Create(
                 IsArithmeticType(wireType))
             {
                 column.AggregateImage = MakeBuiltinAggregate(aggregateName, wireType);
+            } else if (auto hllPrecision = TryParseHllMergeStatePrecision(aggregateName)) {
+                column.AggregateImage = MakeHllMergeStateAggregateByPrecision(*hllPrecision);
             } else {
                 column.AggregateImage = CodegenAggregate(
                     GetBuiltinAggregateProfilers()->GetAggregate(aggregateName)->Profile(
