@@ -13,7 +13,6 @@
 
 #include <yt/yt/client/query_client/query_statistics.h>
 
-#include <yt/yt/core/misc/hyperloglog.h>
 #include <yt/yt/core/misc/sync_cache.h>
 
 namespace NYT::NQueryClient {
@@ -94,33 +93,38 @@ void HllMergeStateMerge(
         return;
     }
 
-    constexpr ui64 RegisterCount = (ui64)1 << Precision;
-    YT_VERIFY(incomingState->Length == RegisterCount);
+    constexpr ui32 RegisterCount = 1u << Precision;
+    THROW_ERROR_EXCEPTION_IF(
+        static_cast<ui32>(incomingState->Length) != RegisterCount,
+        "State size mismatch in HyperLogLog aggregate column: expected %v, got %v",
+        RegisterCount,
+        incomingState->Length);
 
     if (updatedState->Type == EValueType::Null) {
         *updatedState = buffer->CaptureValue(*incomingState);
         return;
     }
 
-    YT_VERIFY(updatedState->Length == RegisterCount);
+    THROW_ERROR_EXCEPTION_IF(
+        static_cast<ui32>(updatedState->Length) != RegisterCount,
+        "State size mismatch in HyperLogLog aggregate column: expected %v, got %v",
+        RegisterCount,
+        updatedState->Length);
 
-    // Ensure updatedState points to writable memory owned by the row buffer.
-    // We check if the data pointer is within the row buffer's managed memory.
-    // If not, capture it first.
-    auto captured = buffer->CaptureValue(*updatedState);
-    *updatedState = captured;
-
-    auto* dst = const_cast<char*>(updatedState->Data.String);
-    auto* src = incomingState->Data.String;
+    // Allocate a new buffer for the merged result.
+    // This avoids mutating potentially read-only memory (e.g. data from chunks)
+    // and avoids redundant copies when state is already buffer-owned.
+    auto* merged = buffer->GetPool()->AllocateAligned(RegisterCount);
+    auto* dst = static_cast<char*>(merged);
+    const auto* lhs = updatedState->Data.String;
+    const auto* rhs = incomingState->Data.String;
 
     // Element-wise max (HLL merge).
-    for (ui64 i = 0; i < RegisterCount; ++i) {
-        auto srcVal = static_cast<ui8>(src[i]);
-        auto dstVal = static_cast<ui8>(dst[i]);
-        if (srcVal > dstVal) {
-            dst[i] = src[i];
-        }
+    for (ui32 i = 0; i < RegisterCount; ++i) {
+        dst[i] = static_cast<ui8>(lhs[i]) >= static_cast<ui8>(rhs[i]) ? lhs[i] : rhs[i];
     }
+
+    updatedState->Data.String = dst;
 }
 
 template <int Precision>
