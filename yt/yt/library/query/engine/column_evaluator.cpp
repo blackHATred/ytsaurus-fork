@@ -82,105 +82,6 @@ void Finalize(const TRowBufferPtr&, TValue* value, const TValue* state, NWebAsse
     *value = *state;
 }
 
-template <int Precision>
-void HllMergeStateMerge(
-    const TRowBufferPtr& buffer,
-    TValue* updatedState,
-    const TValue* incomingState,
-    NWebAssembly::IWebAssemblyCompartment*)
-{
-    if (incomingState->Type == EValueType::Null) {
-        return;
-    }
-
-    constexpr ui32 RegisterCount = 1u << Precision;
-    THROW_ERROR_EXCEPTION_IF(
-        static_cast<ui32>(incomingState->Length) != RegisterCount,
-        "State size mismatch in HyperLogLog aggregate column: expected %v, got %v",
-        RegisterCount,
-        incomingState->Length);
-
-    if (updatedState->Type == EValueType::Null) {
-        *updatedState = buffer->CaptureValue(*incomingState);
-        return;
-    }
-
-    THROW_ERROR_EXCEPTION_IF(
-        static_cast<ui32>(updatedState->Length) != RegisterCount,
-        "State size mismatch in HyperLogLog aggregate column: expected %v, got %v",
-        RegisterCount,
-        updatedState->Length);
-
-    // Allocate a new buffer for the merged result.
-    // This avoids mutating potentially read-only memory (e.g. data from chunks)
-    // and avoids redundant copies when state is already buffer-owned.
-    auto* merged = buffer->GetPool()->AllocateAligned(RegisterCount);
-    auto* dst = static_cast<char*>(merged);
-    const auto* lhs = updatedState->Data.String;
-    const auto* rhs = incomingState->Data.String;
-
-    // Element-wise max (HLL merge).
-    for (ui32 i = 0; i < RegisterCount; ++i) {
-        dst[i] = static_cast<ui8>(lhs[i]) >= static_cast<ui8>(rhs[i]) ? lhs[i] : rhs[i];
-    }
-
-    updatedState->Data.String = dst;
-}
-
-template <int Precision>
-void HllMergeStateUpdate(
-    const TRowBufferPtr& buffer,
-    TValue* state,
-    TRange<TValue> incomingValues,
-    NWebAssembly::IWebAssemblyCompartment* compartment)
-{
-    for (const auto& value : incomingValues) {
-        HllMergeStateMerge<Precision>(buffer, state, &value, compartment);
-    }
-}
-
-std::optional<int> TryParseHllMergeStatePrecision(const std::string& name)
-{
-    // Match "hll_N_merge_state" where N is 7..14.
-    static constexpr TStringBuf prefix = "hll_";
-    static constexpr TStringBuf suffix = "_merge_state";
-    if (!name.starts_with(prefix) || !name.ends_with(suffix)) {
-        return std::nullopt;
-    }
-    auto middle = TStringBuf(name).SubString(prefix.size(), name.size() - prefix.size() - suffix.size());
-    int precision = 0;
-    if (!TryFromString(middle, precision) || precision < 7 || precision > 14) {
-        return std::nullopt;
-    }
-    return precision;
-}
-
-template <int Precision>
-TCGAggregateImage MakeHllMergeStateAggregate()
-{
-    TCGAggregateCallbacks callbacks;
-    callbacks.Init = BIND(Init);
-    callbacks.Update = BIND(HllMergeStateUpdate<Precision>);
-    callbacks.Merge = BIND(HllMergeStateMerge<Precision>);
-    callbacks.Finalize = BIND(Finalize);
-    return {std::move(callbacks), /*compartment*/ nullptr};
-}
-
-TCGAggregateImage MakeHllMergeStateAggregateByPrecision(int precision)
-{
-    switch (precision) {
-        case 7: return MakeHllMergeStateAggregate<7>();
-        case 8: return MakeHllMergeStateAggregate<8>();
-        case 9: return MakeHllMergeStateAggregate<9>();
-        case 10: return MakeHllMergeStateAggregate<10>();
-        case 11: return MakeHllMergeStateAggregate<11>();
-        case 12: return MakeHllMergeStateAggregate<12>();
-        case 13: return MakeHllMergeStateAggregate<13>();
-        case 14: return MakeHllMergeStateAggregate<14>();
-        default: YT_ABORT();
-    }
-}
-
 TCGAggregateImage MakeBuiltinAggregate(const std::string& name, EValueType wireType)
 {
     TCGAggregateCallbacks callbacks;
@@ -308,8 +209,6 @@ TColumnEvaluatorPtr TColumnEvaluator::Create(
                 IsArithmeticType(wireType))
             {
                 column.AggregateImage = MakeBuiltinAggregate(aggregateName, wireType);
-            } else if (auto hllPrecision = TryParseHllMergeStatePrecision(aggregateName)) {
-                column.AggregateImage = MakeHllMergeStateAggregateByPrecision(*hllPrecision);
             } else {
                 column.AggregateImage = CodegenAggregate(
                     GetBuiltinAggregateProfilers()->GetAggregate(aggregateName)->Profile(
