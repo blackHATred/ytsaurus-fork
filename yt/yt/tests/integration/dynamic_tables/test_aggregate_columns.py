@@ -655,6 +655,90 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         assert estimate_after_compact == estimate, \
             "Cardinality changed after compaction: {} -> {}".format(estimate, estimate_after_compact)
 
+    @authors("abatovkin")
+    @pytest.mark.parametrize("precision", [7, 14])
+    def test_hll_cardinality_function(self, precision):
+        """Test cardinality() function on HLL aggregate columns."""
+        import hashlib
+
+        sync_create_cells(1)
+
+        register_count = 1 << precision
+
+        def farm_hash(value):
+            h = hashlib.md5(str(value).encode()).digest()
+            return int.from_bytes(h[:8], "little")
+
+        def make_empty_hll():
+            return bytearray(register_count)
+
+        def hll_add(state, raw_value):
+            fingerprint = farm_hash(raw_value)
+            fingerprint |= (1 << 63)
+            index = fingerprint & (register_count - 1)
+            shifted = fingerprint >> precision
+            zeroes_plus_one = 0
+            while zeroes_plus_one < 64 and (shifted & 1) == 0:
+                shifted >>= 1
+                zeroes_plus_one += 1
+            zeroes_plus_one += 1
+            if state[index] < zeroes_plus_one:
+                state[index] = zeroes_plus_one
+
+        aggregate_name = "hll_{}_merge_state".format(precision)
+        schema = [
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "hll_state", "type": "string", "aggregate": aggregate_name},
+        ]
+        create_dynamic_table("//tmp/t_hll_func", schema=schema)
+        sync_mount_table("//tmp/t_hll_func")
+
+        hll1 = make_empty_hll()
+        for i in range(1000):
+            hll_add(hll1, i)
+        insert_rows("//tmp/t_hll_func", [{"key": 1, "hll_state": bytes(hll1)}], aggregate=True)
+
+        hll2 = make_empty_hll()
+        for i in range(500, 1500):
+            hll_add(hll2, i)
+        insert_rows("//tmp/t_hll_func", [{"key": 2, "hll_state": bytes(hll2)}], aggregate=True)
+
+        rows = select_rows("key, cardinality(hll_state) as card from [//tmp/t_hll_func] order by key")
+        
+        assert len(rows) == 2
+
+        max_error = 0.20 if precision == 7 else 0.05
+
+        card1 = rows[0]["card"]
+        assert rows[0]["key"] == 1
+        assert abs(card1 - 1000) / 1000 < max_error, \
+            "Cardinality for key=1 is {} but expected ~1000 (error: {:.1%})".format(card1, abs(card1 - 1000) / 1000)
+
+        card2 = rows[1]["card"] 
+        assert rows[1]["key"] == 2
+        assert abs(card2 - 1000) / 1000 < max_error, \
+            "Cardinality for key=2 is {} but expected ~1000 (error: {:.1%})".format(card2, abs(card2 - 1000) / 1000)
+
+        total_rows = select_rows("cardinality(hll_state) as total_card from [//tmp/t_hll_func]")
+        assert len(total_rows) == 1
+        total_card = total_rows[0]["total_card"]
+        assert abs(total_card - 1500) / 1500 < max_error, \
+            "Total cardinality is {} but expected ~1500 (error: {:.1%})".format(total_card, abs(total_card - 1500) / 1500)
+
+        sync_flush_table("//tmp/t_hll_func")
+        sync_compact_table("//tmp/t_hll_func")
+        
+        rows_after = select_rows("key, cardinality(hll_state) as card from [//tmp/t_hll_func] order by key")
+        assert len(rows_after) == 2
+
+        card1_after = rows_after[0]["card"]
+        card2_after = rows_after[1]["card"]
+        
+        assert abs(card1_after - card1) / card1 < 0.01, \
+            "Cardinality changed significantly after compaction for key=1: {} -> {}".format(card1, card1_after)
+        assert abs(card2_after - card2) / card2 < 0.01, \
+            "Cardinality changed significantly after compaction for key=2: {} -> {}".format(card2, card2_after)
+
     @authors("leasid")
     def test_aggregate_xdelta(self):
         sync_create_cells(1)
