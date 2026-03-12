@@ -2,7 +2,7 @@ from .test_sorted_dynamic_tables import TestSortedDynamicTablesBase
 
 from yt_commands import (
     authors,
-    create, create_dynamic_table, alter_table, read_table,
+    create, create_dynamic_table, alter_table, read_table, write_table,
     start_transaction, commit_transaction,
     lookup_rows, select_rows, insert_rows, delete_rows,
     sync_create_cells, sync_mount_table, sync_flush_table, sync_compact_table, sync_unmount_table)
@@ -876,6 +876,94 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         rows[3] = new_row_3[0]
         rows[5] = new_row_5[0]
         assert value == rows
+
+    @authors("abatovkin")
+    def test_aggregate_uniq(self):
+        """Test uniq_merge_state aggregate columns for adaptive cardinality estimation."""
+        sync_create_cells(1)
+
+        create("table", "//tmp/raw_data", attributes={
+            "schema": [
+                {"name": "key", "type": "int64"},
+                {"name": "value", "type": "int64"},
+            ]
+        })
+
+        write_table("//tmp/raw_data", [
+            {"key": 1, "value": 1},
+            {"key": 1, "value": 2}, 
+            {"key": 1, "value": 3},
+            {"key": 1, "value": 1},  # duplicate
+            {"key": 1, "value": 2},  # duplicate
+            {"key": 2, "value": 4},
+            {"key": 2, "value": 5},
+            {"key": 2, "value": 6},
+            {"key": 2, "value": 4},  # duplicate
+        ])
+
+        schema = [
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "uniq_state", "type": "string", "aggregate": "uniq_merge_state"},
+        ]
+        create_dynamic_table("//tmp/t_uniq", schema=schema)
+        sync_mount_table("//tmp/t_uniq")
+
+        states = select_rows("key, uniq_state(value) as state from [//tmp/raw_data] group by key")
+        
+        for state in states:
+            insert_rows("//tmp/t_uniq", [{"key": state["key"], "uniq_state": state["state"]}], aggregate=True)
+
+        rows = lookup_rows("//tmp/t_uniq", [{"key": 1}, {"key": 2}])
+        assert len(rows) == 2
+
+        cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
+        
+        assert len(cardinalities) == 2
+        assert cardinalities[0]["key"] == 1
+        assert cardinalities[1]["key"] == 2
+        
+        # For uniq algorithm, exact cardinality should be returned for small sets
+        # key=1 should have 3 unique values (1,2,3), key=2 should have 3 unique values (4,5,6)
+        initial_card1 = cardinalities[0]["cardinality"]
+        initial_card2 = cardinalities[1]["cardinality"]
+        assert initial_card1 == 3
+        assert initial_card2 == 3
+
+        write_table("//tmp/raw_data_2", [
+            {"key": 1, "value": 4},  # new unique value for key=1
+            {"key": 1, "value": 3},  # duplicate 
+            {"key": 2, "value": 7},  # new unique value for key=2
+            {"key": 2, "value": 8},  # new unique value for key=2
+        ])
+        
+        additional_states = select_rows("key, uniq_state(value) as state from [//tmp/raw_data_2] group by key")
+        
+        for state in additional_states:
+            insert_rows("//tmp/t_uniq", [{"key": state["key"], "uniq_state": state["state"]}], aggregate=True)
+
+        updated_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
+        
+        assert len(updated_cardinalities) == 2
+        assert updated_cardinalities[0]["cardinality"] == 4
+        assert updated_cardinalities[1]["cardinality"] == 5
+
+        sync_flush_table("//tmp/t_uniq")
+        sync_compact_table("//tmp/t_uniq")
+
+        final_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
+        assert final_cardinalities[0]["cardinality"] == 4
+        assert final_cardinalities[1]["cardinality"] == 5
+
+        write_table("//tmp/raw_data_3", [
+            {"key": 1, "value": 3},  # duplicate with existing
+            {"key": 1, "value": 5},  # new unique value
+        ])
+        
+        overlap_state = select_rows("key, uniq_state(value) as state from [//tmp/raw_data_3] group by key")[0]
+        insert_rows("//tmp/t_uniq", [{"key": overlap_state["key"], "uniq_state": overlap_state["state"]}], aggregate=True)
+
+        final_check = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] where key = 1")[0]
+        assert final_check["cardinality"] == 5
 
 ##################################################################
 
