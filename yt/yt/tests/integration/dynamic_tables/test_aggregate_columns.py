@@ -976,13 +976,31 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         overlap_state = select_rows("key, uniq_state(value) as state from [//tmp/raw_data_3] group by key")[0]
         insert_rows("//tmp/t_uniq", [{"key": overlap_state["key"], "uniq_state": overlap_state["state"]}], aggregate=True)
 
-        final_check = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] where key = 1")[0]
-        assert final_check["cardinality"] == 5
+        final_check = select_rows(
+            "key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] where key = 1 group by key")
+        assert len(final_check) == 1
+        assert final_check[0]["cardinality"] == 5
 
     @authors("abatovkin")
     def test_aggregate_uniq_basic(self):
         """Test basic uniq aggregate column for adaptive cardinality estimation."""
         sync_create_cells(1)
+
+        create_dynamic_table("//tmp/raw_data", schema=[
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "event_id", "type": "int64", "sort_order": "ascending"},
+            {"name": "value", "type": "int64"},
+        ])
+        sync_mount_table("//tmp/raw_data")
+
+        insert_rows("//tmp/raw_data", [
+            {"key": 1, "event_id": 1, "value": 1},
+            {"key": 1, "event_id": 2, "value": 2},
+            {"key": 1, "event_id": 3, "value": 3},
+            {"key": 1, "event_id": 4, "value": 1},  # duplicate
+            {"key": 2, "event_id": 1, "value": 4},
+            {"key": 2, "event_id": 2, "value": 5},
+        ])
 
         schema = [
             {"name": "key", "type": "int64", "sort_order": "ascending"},
@@ -990,14 +1008,10 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         ]
         create_dynamic_table("//tmp/t_uniq_basic", schema=schema)
         sync_mount_table("//tmp/t_uniq_basic")
-        insert_rows("//tmp/t_uniq_basic", [
-            {"key": 1, "uniq_count": 1},
-            {"key": 1, "uniq_count": 2},
-            {"key": 1, "uniq_count": 3},
-            {"key": 1, "uniq_count": 1},  # duplicate
-            {"key": 2, "uniq_count": 4},
-            {"key": 2, "uniq_count": 5},
-        ], aggregate=True)
+        cardinalities = select_rows("key, uniq(value) as count from [//tmp/raw_data] group by key")
+
+        for card in cardinalities:
+            insert_rows("//tmp/t_uniq_basic", [{"key": card["key"], "uniq_count": card["count"]}], aggregate=True)
 
         rows = lookup_rows("//tmp/t_uniq_basic", [{"key": 1}, {"key": 2}])
         assert len(rows) == 2
