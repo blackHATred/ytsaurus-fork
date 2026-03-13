@@ -884,20 +884,21 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
 
         create_dynamic_table("//tmp/raw_data", schema=[
             {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "event_id", "type": "int64", "sort_order": "ascending"},
             {"name": "value", "type": "int64"},
         ])
         sync_mount_table("//tmp/raw_data")
 
         insert_rows("//tmp/raw_data", [
-            {"key": 1, "value": 1},
-            {"key": 1, "value": 2}, 
-            {"key": 1, "value": 3},
-            {"key": 1, "value": 1},  # duplicate
-            {"key": 1, "value": 2},  # duplicate
-            {"key": 2, "value": 4},
-            {"key": 2, "value": 5},
-            {"key": 2, "value": 6},
-            {"key": 2, "value": 4},  # duplicate
+            {"key": 1, "event_id": 1, "value": 1},
+            {"key": 1, "event_id": 2, "value": 2},
+            {"key": 1, "event_id": 3, "value": 3},
+            {"key": 1, "event_id": 4, "value": 1},  # duplicate
+            {"key": 1, "event_id": 5, "value": 2},  # duplicate
+            {"key": 2, "event_id": 1, "value": 4},
+            {"key": 2, "event_id": 2, "value": 5},
+            {"key": 2, "event_id": 3, "value": 6},
+            {"key": 2, "event_id": 4, "value": 4},  # duplicate
         ])
 
         schema = [
@@ -930,15 +931,16 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
 
         create_dynamic_table("//tmp/raw_data_2", schema=[
             {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "event_id", "type": "int64", "sort_order": "ascending"},
             {"name": "value", "type": "int64"},
         ])
         sync_mount_table("//tmp/raw_data_2")
 
         insert_rows("//tmp/raw_data_2", [
-            {"key": 1, "value": 4},  # new unique value for key=1
-            {"key": 1, "value": 3},  # duplicate 
-            {"key": 2, "value": 7},  # new unique value for key=2
-            {"key": 2, "value": 8},  # new unique value for key=2
+            {"key": 1, "event_id": 1, "value": 4},  # new unique value for key=1
+            {"key": 1, "event_id": 2, "value": 3},  # duplicate
+            {"key": 2, "event_id": 1, "value": 7},  # new unique value for key=2
+            {"key": 2, "event_id": 2, "value": 8},  # new unique value for key=2
         ])
         
         additional_states = select_rows("key, uniq_state(value) as state from [//tmp/raw_data_2] group by key")
@@ -961,13 +963,14 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
 
         create_dynamic_table("//tmp/raw_data_3", schema=[
             {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "event_id", "type": "int64", "sort_order": "ascending"},
             {"name": "value", "type": "int64"},
         ])
         sync_mount_table("//tmp/raw_data_3")
 
         insert_rows("//tmp/raw_data_3", [
-            {"key": 1, "value": 3},  # duplicate with existing
-            {"key": 1, "value": 5},  # new unique value
+            {"key": 1, "event_id": 1, "value": 3},  # duplicate with existing
+            {"key": 1, "event_id": 2, "value": 5},  # new unique value
         ])
         
         overlap_state = select_rows("key, uniq_state(value) as state from [//tmp/raw_data_3] group by key")[0]
@@ -981,32 +984,20 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         """Test basic uniq aggregate column for adaptive cardinality estimation."""
         sync_create_cells(1)
 
-        create_dynamic_table("//tmp/raw_data", schema=[
-            {"name": "key", "type": "int64", "sort_order": "ascending"},
-            {"name": "value", "type": "int64"},
-        ])
-        sync_mount_table("//tmp/raw_data")
-
-        insert_rows("//tmp/raw_data", [
-            {"key": 1, "value": 1},
-            {"key": 1, "value": 2}, 
-            {"key": 1, "value": 3},
-            {"key": 1, "value": 1},  # duplicate
-            {"key": 2, "value": 4},
-            {"key": 2, "value": 5},
-        ])
-
         schema = [
             {"name": "key", "type": "int64", "sort_order": "ascending"},
             {"name": "uniq_count", "type": "uint64", "aggregate": "uniq"},
         ]
         create_dynamic_table("//tmp/t_uniq_basic", schema=schema)
         sync_mount_table("//tmp/t_uniq_basic")
-
-        cardinalities = select_rows("key, uniq(value) as count from [//tmp/raw_data] group by key")
-        
-        for card in cardinalities:
-            insert_rows("//tmp/t_uniq_basic", [{"key": card["key"], "uniq_count": card["count"]}], aggregate=True)
+        insert_rows("//tmp/t_uniq_basic", [
+            {"key": 1, "uniq_count": 1},
+            {"key": 1, "uniq_count": 2},
+            {"key": 1, "uniq_count": 3},
+            {"key": 1, "uniq_count": 1},  # duplicate
+            {"key": 2, "uniq_count": 4},
+            {"key": 2, "uniq_count": 5},
+        ], aggregate=True)
 
         rows = lookup_rows("//tmp/t_uniq_basic", [{"key": 1}, {"key": 2}])
         assert len(rows) == 2
