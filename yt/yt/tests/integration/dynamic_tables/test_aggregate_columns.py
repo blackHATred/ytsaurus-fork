@@ -882,14 +882,13 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         """Test uniq_merge_state aggregate columns for adaptive cardinality estimation."""
         sync_create_cells(1)
 
-        create("table", "//tmp/raw_data", attributes={
-            "schema": [
-                {"name": "key", "type": "int64"},
-                {"name": "value", "type": "int64"},
-            ]
-        })
+        create_dynamic_table("//tmp/raw_data", schema=[
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "value", "type": "int64"},
+        ])
+        sync_mount_table("//tmp/raw_data")
 
-        write_table("//tmp/raw_data", [
+        insert_rows("//tmp/raw_data", [
             {"key": 1, "value": 1},
             {"key": 1, "value": 2}, 
             {"key": 1, "value": 3},
@@ -916,7 +915,7 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         rows = lookup_rows("//tmp/t_uniq", [{"key": 1}, {"key": 2}])
         assert len(rows) == 2
 
-        cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
+        cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key limit 10")
         
         assert len(cardinalities) == 2
         assert cardinalities[0]["key"] == 1
@@ -929,7 +928,13 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         assert initial_card1 == 3
         assert initial_card2 == 3
 
-        write_table("//tmp/raw_data_2", [
+        create_dynamic_table("//tmp/raw_data_2", schema=[
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "value", "type": "int64"},
+        ])
+        sync_mount_table("//tmp/raw_data_2")
+
+        insert_rows("//tmp/raw_data_2", [
             {"key": 1, "value": 4},  # new unique value for key=1
             {"key": 1, "value": 3},  # duplicate 
             {"key": 2, "value": 7},  # new unique value for key=2
@@ -941,7 +946,7 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         for state in additional_states:
             insert_rows("//tmp/t_uniq", [{"key": state["key"], "uniq_state": state["state"]}], aggregate=True)
 
-        updated_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
+        updated_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key limit 10")
         
         assert len(updated_cardinalities) == 2
         assert updated_cardinalities[0]["cardinality"] == 4
@@ -950,11 +955,17 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         sync_flush_table("//tmp/t_uniq")
         sync_compact_table("//tmp/t_uniq")
 
-        final_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
+        final_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key limit 10")
         assert final_cardinalities[0]["cardinality"] == 4
         assert final_cardinalities[1]["cardinality"] == 5
 
-        write_table("//tmp/raw_data_3", [
+        create_dynamic_table("//tmp/raw_data_3", schema=[
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "value", "type": "int64"},
+        ])
+        sync_mount_table("//tmp/raw_data_3")
+
+        insert_rows("//tmp/raw_data_3", [
             {"key": 1, "value": 3},  # duplicate with existing
             {"key": 1, "value": 5},  # new unique value
         ])
@@ -970,14 +981,13 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         """Test basic uniq aggregate column for adaptive cardinality estimation."""
         sync_create_cells(1)
 
-        create("table", "//tmp/raw_data", attributes={
-            "schema": [
-                {"name": "key", "type": "int64"},
-                {"name": "value", "type": "int64"},
-            ]
-        })
+        create_dynamic_table("//tmp/raw_data", schema=[
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "value", "type": "int64"},
+        ])
+        sync_mount_table("//tmp/raw_data")
 
-        write_table("//tmp/raw_data", [
+        insert_rows("//tmp/raw_data", [
             {"key": 1, "value": 1},
             {"key": 1, "value": 2}, 
             {"key": 1, "value": 3},
