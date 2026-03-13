@@ -763,8 +763,8 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         rows = lookup_rows("//tmp/t_uniq", [{"key": 1}, {"key": 2}])
         assert len(rows) == 2
 
-        cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key limit 10")
-
+        cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
+        
         assert len(cardinalities) == 2
         assert cardinalities[0]["key"] == 1
         assert cardinalities[1]["key"] == 2
@@ -788,7 +788,7 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         for state in additional_states:
             insert_rows("//tmp/t_uniq", [{"key": state["key"], "uniq_state": state["state"]}], aggregate=True)
 
-        updated_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key limit 10")
+        updated_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
         
         assert len(updated_cardinalities) == 2
         assert updated_cardinalities[0]["cardinality"] == 4
@@ -797,7 +797,7 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         sync_flush_table("//tmp/t_uniq")
         sync_compact_table("//tmp/t_uniq")
 
-        final_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key limit 10")
+        final_cardinalities = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] group by key order by key")
         assert final_cardinalities[0]["cardinality"] == 4
         assert final_cardinalities[1]["cardinality"] == 5
 
@@ -930,7 +930,7 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         ]
         insert_rows("//tmp/raw_hll_data", test_data)
 
-        counts = select_rows(f"key, hll_{precision}(value) as count from [//tmp/raw_hll_data] group by key order by key limit 10")
+        counts = select_rows(f"key, hll_{precision}(value) as count from [//tmp/raw_hll_data] group by key order by key")
         assert len(counts) == 2
         assert abs(counts[0]["count"] - 100) < 20  # Allow HLL estimation error
         assert abs(counts[1]["count"] - 100) < 20
