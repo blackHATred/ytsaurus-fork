@@ -1977,8 +1977,15 @@ void ValidateColumnSchema(
             "_yt_stored_replica_set",
             "_yt_last_seen_replica_set",
             "dict_sum",
+            "uniq",
+            "uniq_state",
+            "uniq_merge",
+            "uniq_merge_state",
         };
         for (int precision = 7; precision <= 14; ++precision) {
+            result.insert(Format("hll_%v", precision));
+            result.insert(Format("hll_%v_state", precision));
+            result.insert(Format("hll_%v_merge", precision));
             result.insert(Format("hll_%v_merge_state", precision));
         }
         return result;
@@ -2552,47 +2559,3 @@ void FromProto(NTableClient::TColumnFilter* columnFilter, const TColumnFilter& p
 
 ////////////////////////////////////////////////////////////////////////////////
 
-} // namespace NYT::NTableClient
-
-size_t THash<NYT::NTableClient::TColumnStableName>::operator()(const NYT::NTableClient::TColumnStableName& stableName) const
-{
-    return THash<std::string>()(stableName.Underlying());
-}
-
-size_t THash<NYT::NTableClient::TColumnSchema>::operator()(const NYT::NTableClient::TColumnSchema& columnSchema) const
-{
-    return MultiHash(
-        columnSchema.StableName(),
-        columnSchema.Name(),
-        *columnSchema.LogicalType(),
-        columnSchema.SortOrder(),
-        columnSchema.Lock(),
-        columnSchema.Expression(),
-        columnSchema.Materialized(),
-        columnSchema.Aggregate(),
-        columnSchema.Group(),
-        columnSchema.MaxInlineHunkSize());
-}
-
-size_t THash<NYT::NTableClient::TDeletedColumn>::operator()(const NYT::NTableClient::TDeletedColumn& columnSchema) const
-{
-    return THash<NYT::NTableClient::TColumnStableName>()(columnSchema.StableName());
-}
-
-size_t THash<NYT::NTableClient::TTableSchema>::operator()(const NYT::NTableClient::TTableSchema& tableSchema) const
-{
-    size_t result = CombineHashes(THash<bool>()(tableSchema.IsUniqueKeys()), THash<bool>()(tableSchema.IsStrict()));
-    if (tableSchema.HasNontrivialSchemaModification()) {
-        result = CombineHashes(
-            result,
-            THash<NYT::NTableClient::ETableSchemaModification>()(tableSchema.GetSchemaModification()));
-    }
-    for (const auto& columnSchema : tableSchema.Columns()) {
-        result = CombineHashes(result, THash<NYT::NTableClient::TColumnSchema>()(columnSchema));
-    }
-    for (const auto& deletedColumnSchema : tableSchema.DeletedColumns()) {
-        result = CombineHashes(result, THash<NYT::NTableClient::TDeletedColumn>()(
-            deletedColumnSchema));
-    }
-    return result;
-}

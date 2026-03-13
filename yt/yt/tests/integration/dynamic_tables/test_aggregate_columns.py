@@ -965,6 +965,49 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         final_check = select_rows("key, uniq_merge(uniq_state) as cardinality from [//tmp/t_uniq] where key = 1")[0]
         assert final_check["cardinality"] == 5
 
+    @authors("abatovkin")
+    def test_aggregate_uniq_basic(self):
+        """Test basic uniq aggregate column for adaptive cardinality estimation."""
+        sync_create_cells(1)
+
+        create("table", "//tmp/raw_data", attributes={
+            "schema": [
+                {"name": "key", "type": "int64"},
+                {"name": "value", "type": "int64"},
+            ]
+        })
+
+        write_table("//tmp/raw_data", [
+            {"key": 1, "value": 1},
+            {"key": 1, "value": 2}, 
+            {"key": 1, "value": 3},
+            {"key": 1, "value": 1},  # duplicate
+            {"key": 2, "value": 4},
+            {"key": 2, "value": 5},
+        ])
+
+        schema = [
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "uniq_count", "type": "uint64", "aggregate": "uniq"},
+        ]
+        create_dynamic_table("//tmp/t_uniq_basic", schema=schema)
+        sync_mount_table("//tmp/t_uniq_basic")
+
+        cardinalities = select_rows("key, uniq(value) as count from [//tmp/raw_data] group by key")
+        
+        for card in cardinalities:
+            insert_rows("//tmp/t_uniq_basic", [{"key": card["key"], "uniq_count": card["count"]}], aggregate=True)
+
+        rows = lookup_rows("//tmp/t_uniq_basic", [{"key": 1}, {"key": 2}])
+        assert len(rows) == 2
+        
+        # Sort by key for consistent comparison
+        rows = sorted(rows, key=lambda x: x["key"])
+        
+        # For uniq algorithm, exact cardinality should be returned for small sets
+        assert rows[0]["key"] == 1 and rows[0]["uniq_count"] == 3  # values 1,2,3
+        assert rows[1]["key"] == 2 and rows[1]["uniq_count"] == 2  # values 4,5
+
 ##################################################################
 
 

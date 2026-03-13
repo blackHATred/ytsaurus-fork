@@ -331,8 +331,31 @@ TEST(TTableSchemaTest, ColumnSchemaValidation)
     for (int precision = 7; precision <= 14; ++precision) {
         ValidateColumnSchema(
             TColumnSchema("Name", EValueType::String)
+                .SetAggregate(Format("hll_%v", precision)));
+        ValidateColumnSchema(
+            TColumnSchema("Name", EValueType::String)
+                .SetAggregate(Format("hll_%v_state", precision)));
+        ValidateColumnSchema(
+            TColumnSchema("Name", EValueType::String)
+                .SetAggregate(Format("hll_%v_merge", precision)));
+        ValidateColumnSchema(
+            TColumnSchema("Name", EValueType::String)
                 .SetAggregate(Format("hll_%v_merge_state", precision)));
     }
+
+    // UNIQ aggregate columns.
+    ValidateColumnSchema(
+        TColumnSchema("Name", EValueType::String)
+            .SetAggregate(std::string("uniq")));
+    ValidateColumnSchema(
+        TColumnSchema("Name", EValueType::String)
+            .SetAggregate(std::string("uniq_state")));
+    ValidateColumnSchema(
+        TColumnSchema("Name", EValueType::String)
+            .SetAggregate(std::string("uniq_merge")));
+    ValidateColumnSchema(
+        TColumnSchema("Name", EValueType::String)
+            .SetAggregate(std::string("uniq_merge_state")));
 
     // Invalid aggregate function names.
     expectBad(
