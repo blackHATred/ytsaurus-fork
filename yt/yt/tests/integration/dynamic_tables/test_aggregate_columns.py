@@ -916,18 +916,19 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         """Test all HLL function variants: hll, hll_state, hll_merge, hll_merge_state."""
         sync_create_cells(1)
 
-        create("table", "//tmp/raw_hll_data", attributes={
-            "schema": [
-                {"name": "key", "type": "int64"},
-                {"name": "value", "type": "int64"},
-            ]
-        })
+        schema_raw = [
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "value", "type": "int64"},
+        ]
+        create_dynamic_table("//tmp/raw_hll_data", schema=schema_raw)
+        sync_mount_table("//tmp/raw_hll_data")
 
-        write_table("//tmp/raw_hll_data", [
+        test_data = [
             {"key": 1, "value": i} for i in range(100)
         ] + [
             {"key": 2, "value": i} for i in range(50, 150)
-        ])
+        ]
+        insert_rows("//tmp/raw_hll_data", test_data)
 
         counts = select_rows(f"key, hll_{precision}(value) as count from [//tmp/raw_hll_data] group by key order by key")
         assert len(counts) == 2
