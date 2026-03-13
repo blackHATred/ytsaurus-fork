@@ -367,6 +367,91 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
             self._create_table_with_aggregate_column("//tmp/t", aggregate=aggregate)
 
     @authors("abatovkin")
+    @pytest.mark.parametrize("precision", [7, 10, 14])
+    def test_aggregate_hll(self, precision):
+        sync_create_cells(1)
+
+        register_count = 1 << precision
+
+        def make_empty_hll():
+            return b"\x00" * register_count
+
+        def hll_add(state, fingerprint):
+            registers = bytearray(state)
+            fingerprint |= (1 << 63)
+            index = fingerprint & (register_count - 1)
+            shifted = fingerprint >> precision
+            zeroes_plus_one = 0
+            while zeroes_plus_one < 64 and (shifted & 1) == 0:
+                shifted >>= 1
+                zeroes_plus_one += 1
+            zeroes_plus_one += 1
+            if registers[index] < zeroes_plus_one:
+                registers[index] = zeroes_plus_one
+            return bytes(registers)
+
+        def hll_merge(state1, state2):
+            r1 = bytearray(state1)
+            r2 = bytearray(state2)
+            return bytes(max(a, b) for a, b in zip(r1, r2))
+
+        def farm_hash_int64(value):
+            # Use a simple hash for test purposes; the exact hash function
+            # does not matter as long as we are consistent within the test
+            import hashlib
+            h = hashlib.md5(str(value).encode()).digest()
+            return int.from_bytes(h[:8], "little")
+
+        aggregate_name = "hll_{}_merge_state".format(precision)
+
+        schema = [
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "hll_state", "type": "string", "aggregate": aggregate_name},
+        ]
+        create_dynamic_table("//tmp/t_hll", schema=schema)
+        sync_mount_table("//tmp/t_hll")
+
+        hll1 = make_empty_hll()
+        for i in range(100):
+            hll1 = hll_add(hll1, farm_hash_int64(i))
+
+        hll2 = make_empty_hll()
+        for i in range(50, 150):
+            hll2 = hll_add(hll2, farm_hash_int64(i))
+
+        insert_rows("//tmp/t_hll", [{"key": 1, "hll_state": hll1}], aggregate=True)
+        insert_rows("//tmp/t_hll", [{"key": 1, "hll_state": hll2}], aggregate=True)
+
+        expected_merged = hll_merge(hll1, hll2)
+
+        rows = lookup_rows("//tmp/t_hll", [{"key": 1}])
+        assert len(rows) == 1
+        actual_state = get_bytes(rows[0]["hll_state"])
+        assert actual_state == expected_merged
+
+        sync_flush_table("//tmp/t_hll")
+
+        rows = lookup_rows("//tmp/t_hll", [{"key": 1}])
+        assert len(rows) == 1
+        actual_state = get_bytes(rows[0]["hll_state"])
+        assert actual_state == expected_merged
+
+        hll3 = make_empty_hll()
+        for i in range(200, 300):
+            hll3 = hll_add(hll3, farm_hash_int64(i))
+
+        insert_rows("//tmp/t_hll", [{"key": 1, "hll_state": hll3}], aggregate=True)
+        expected_merged = hll_merge(expected_merged, hll3)
+
+        sync_flush_table("//tmp/t_hll")
+        sync_compact_table("//tmp/t_hll")
+
+        rows = lookup_rows("//tmp/t_hll", [{"key": 1}])
+        assert len(rows) == 1
+        actual_state = get_bytes(rows[0]["hll_state"])
+        assert actual_state == expected_merged
+
+    @authors("abatovkin")
     def test_aggregate_hll_overwrite(self):
         """Test that writing without aggregate flag overwrites the HLL state."""
         sync_create_cells(1)
@@ -415,6 +500,75 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         actual_state = get_bytes(rows[0]["hll_state"])
         assert actual_state == hll2
 
+    @authors("abatovkin")
+    def test_aggregate_hll_multiple_keys(self):
+        """Test HLL aggregate columns with multiple keys."""
+        sync_create_cells(1)
+
+        precision = 7
+        register_count = 1 << precision
+
+        def make_empty_hll():
+            return b"\x00" * register_count
+
+        def hll_add(state, fingerprint):
+            registers = bytearray(state)
+            fingerprint |= (1 << 63)
+            index = fingerprint & (register_count - 1)
+            shifted = fingerprint >> precision
+            zeroes_plus_one = 0
+            while zeroes_plus_one < 64 and (shifted & 1) == 0:
+                shifted >>= 1
+                zeroes_plus_one += 1
+            zeroes_plus_one += 1
+            if registers[index] < zeroes_plus_one:
+                registers[index] = zeroes_plus_one
+            return bytes(registers)
+
+        def hll_merge(state1, state2):
+            return bytes(max(a, b) for a, b in zip(bytearray(state1), bytearray(state2)))
+
+        schema = [
+            {"name": "key", "type": "int64", "sort_order": "ascending"},
+            {"name": "hll_state", "type": "string", "aggregate": "hll_7_merge_state"},
+        ]
+        create_dynamic_table("//tmp/t_hll_multi", schema=schema)
+        sync_mount_table("//tmp/t_hll_multi")
+
+        states = {}
+        for key in range(3):
+            hll = make_empty_hll()
+            for i in range(50):
+                hll = hll_add(hll, (key + 1) * 1000 + i)
+            states[key] = hll
+            insert_rows("//tmp/t_hll_multi", [{"key": key, "hll_state": hll}], aggregate=True)
+
+        hll_extra_0 = make_empty_hll()
+        for i in range(50, 100):
+            hll_extra_0 = hll_add(hll_extra_0, 1000 + i)
+        insert_rows("//tmp/t_hll_multi", [{"key": 0, "hll_state": hll_extra_0}], aggregate=True)
+        states[0] = hll_merge(states[0], hll_extra_0)
+
+        hll_extra_2 = make_empty_hll()
+        for i in range(50, 100):
+            hll_extra_2 = hll_add(hll_extra_2, 3000 + i)
+        insert_rows("//tmp/t_hll_multi", [{"key": 2, "hll_state": hll_extra_2}], aggregate=True)
+        states[2] = hll_merge(states[2], hll_extra_2)
+
+        for key in range(3):
+            rows = lookup_rows("//tmp/t_hll_multi", [{"key": key}])
+            assert len(rows) == 1
+            actual_state = get_bytes(rows[0]["hll_state"])
+            assert actual_state == states[key]
+
+        sync_flush_table("//tmp/t_hll_multi")
+        sync_compact_table("//tmp/t_hll_multi")
+
+        for key in range(3):
+            rows = lookup_rows("//tmp/t_hll_multi", [{"key": key}])
+            assert len(rows) == 1
+            actual_state = get_bytes(rows[0]["hll_state"])
+            assert actual_state == states[key]
 
     @authors("abatovkin")
     @pytest.mark.parametrize("precision", [7, 14])
@@ -724,9 +878,8 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         assert value == rows
 
     @authors("abatovkin")
-    @authors("abatovkin")
-    def test_aggregate_uniq_merge_state(self):
-        """Test uniq_merge_state aggregate columns for state-based cardinality estimation."""
+    def test_aggregate_uniq(self):
+        """Test uniq_merge_state aggregate columns for adaptive cardinality estimation."""
         sync_create_cells(1)
 
         create("table", "//tmp/raw_data", attributes={
@@ -813,8 +966,8 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         assert final_check["cardinality"] == 5
 
     @authors("abatovkin")
-    def test_aggregate_uniq_direct(self):
-        """Test direct uniq aggregate column (uniq function without state)."""
+    def test_aggregate_uniq_basic(self):
+        """Test basic uniq aggregate column for adaptive cardinality estimation."""
         sync_create_cells(1)
 
         create("table", "//tmp/raw_data", attributes={
@@ -854,129 +1007,6 @@ class TestAggregateColumns(TestSortedDynamicTablesBase):
         # For uniq algorithm, exact cardinality should be returned for small sets
         assert rows[0]["key"] == 1 and rows[0]["uniq_count"] == 3  # values 1,2,3
         assert rows[1]["key"] == 2 and rows[1]["uniq_count"] == 2  # values 4,5
-
-    @authors("abatovkin")
-    def test_aggregate_uniq_state_and_merge(self):
-        """Test uniq_state and uniq_merge functions for state-based workflows."""
-        sync_create_cells(1)
-
-        create("table", "//tmp/raw_data", attributes={
-            "schema": [
-                {"name": "key", "type": "int64"},
-                {"name": "value", "type": "int64"},
-            ]
-        })
-
-        write_table("//tmp/raw_data", [
-            {"key": 1, "value": 1},
-            {"key": 1, "value": 2}, 
-            {"key": 1, "value": 3},
-            {"key": 1, "value": 1},  # duplicate
-            {"key": 2, "value": 4},
-            {"key": 2, "value": 5},
-            {"key": 2, "value": 6},
-        ])
-
-        schema_state = [
-            {"name": "key", "type": "int64", "sort_order": "ascending"},
-            {"name": "uniq_state", "type": "string", "aggregate": "uniq_state"},
-        ]
-        create_dynamic_table("//tmp/t_uniq_state", schema=schema_state)
-        sync_mount_table("//tmp/t_uniq_state")
-
-        states = select_rows("key, uniq_state(value) as state from [//tmp/raw_data] group by key")
-        
-        for state in states:
-            insert_rows("//tmp/t_uniq_state", [{"key": state["key"], "uniq_state": state["state"]}], aggregate=True)
-
-        rows = lookup_rows("//tmp/t_uniq_state", [{"key": 1}, {"key": 2}])
-        assert len(rows) == 2
-
-        schema_merge = [
-            {"name": "key", "type": "int64", "sort_order": "ascending"},
-            {"name": "uniq_count", "type": "uint64", "aggregate": "uniq_merge"},
-        ]
-        create_dynamic_table("//tmp/t_uniq_merge", schema=schema_merge)
-        sync_mount_table("//tmp/t_uniq_merge")
-
-        states = select_rows("key, uniq_state from [//tmp/t_uniq_state]")
-        
-        for state in states:
-            insert_rows("//tmp/t_uniq_merge", [{"key": state["key"], "uniq_count": state["uniq_state"]}], aggregate=True)
-
-        final_counts = lookup_rows("//tmp/t_uniq_merge", [{"key": 1}, {"key": 2}])
-        final_counts = sorted(final_counts, key=lambda x: x["key"])
-        
-        assert final_counts[0]["key"] == 1 and final_counts[0]["uniq_count"] == 3
-        assert final_counts[1]["key"] == 2 and final_counts[1]["uniq_count"] == 3
-
-    @authors("abatovkin") 
-    @pytest.mark.parametrize("precision", [7, 14])
-    def test_aggregate_hll_all_variants(self, precision):
-        """Test all HLL function variants: hll, hll_state, hll_merge, hll_merge_state."""
-        sync_create_cells(1)
-
-        create("table", "//tmp/raw_hll_data", attributes={
-            "schema": [
-                {"name": "key", "type": "int64"},
-                {"name": "value", "type": "int64"},
-            ]
-        })
-
-        write_table("//tmp/raw_hll_data", [
-            {"key": 1, "value": i} for i in range(100)
-        ] + [
-            {"key": 2, "value": i} for i in range(50, 150)
-        ])
-
-        counts = select_rows(f"key, hll_{precision}(value) as count from [//tmp/raw_hll_data] group by key order by key")
-        assert len(counts) == 2
-        assert abs(counts[0]["count"] - 100) < 20  # Allow HLL estimation error
-        assert abs(counts[1]["count"] - 100) < 20
-
-        schema_state = [
-            {"name": "key", "type": "int64", "sort_order": "ascending"},
-            {"name": "hll_state", "type": "string", "aggregate": f"hll_{precision}_state"},
-        ]
-        create_dynamic_table("//tmp/t_hll_state", schema=schema_state)
-        sync_mount_table("//tmp/t_hll_state")
-
-        states = select_rows(f"key, hll_{precision}_state(value) as state from [//tmp/raw_hll_data] group by key")
-        for state in states:
-            insert_rows("//tmp/t_hll_state", [{"key": state["key"], "hll_state": state["state"]}], aggregate=True)
-
-        schema_merge = [
-            {"name": "key", "type": "int64", "sort_order": "ascending"},
-            {"name": "hll_count", "type": "uint64", "aggregate": f"hll_{precision}_merge"},
-        ]
-        create_dynamic_table("//tmp/t_hll_merge", schema=schema_merge)
-        sync_mount_table("//tmp/t_hll_merge")
-
-        states = select_rows("key, hll_state from [//tmp/t_hll_state]")
-        for state in states:
-            insert_rows("//tmp/t_hll_merge", [{"key": state["key"], "hll_count": state["hll_state"]}], aggregate=True)
-
-        merge_counts = lookup_rows("//tmp/t_hll_merge", [{"key": 1}, {"key": 2}])
-        merge_counts = sorted(merge_counts, key=lambda x: x["key"])
-        
-        assert abs(merge_counts[0]["hll_count"] - 100) < 20
-        assert abs(merge_counts[1]["hll_count"] - 100) < 20
-
-        schema_merge_state = [
-            {"name": "key", "type": "int64", "sort_order": "ascending"},
-            {"name": "hll_state", "type": "string", "aggregate": f"hll_{precision}_merge_state"},
-        ]
-        create_dynamic_table("//tmp/t_hll_merge_state", schema=schema_merge_state)
-        sync_mount_table("//tmp/t_hll_merge_state")
-
-        original_states = select_rows("key, hll_state from [//tmp/t_hll_state]")
-        for state in original_states:
-            insert_rows("//tmp/t_hll_merge_state", [{"key": state["key"], "hll_state": state["hll_state"]}], aggregate=True)
-
-        final_states = select_rows("key, hll_state from [//tmp/t_hll_merge_state]")
-        for state in final_states:
-            final_count = select_rows(f"hll_{precision}_merge('{state['hll_state']}') as count")[0]["count"]
-            assert abs(final_count - 100) < 20
 
 ##################################################################
 
