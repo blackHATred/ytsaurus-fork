@@ -364,6 +364,27 @@ extern "C" void uniq_merge_state_update(
     TUnversionedValue* leftState,
     TUnversionedValue* rightState)
 {
+    if (rightState->Type == EValueType::Null) {
+        *result = *leftState;
+        return;
+    }
+    if (leftState->Type == EValueType::Null) {
+        uniq_init(context, result);
+        // Copy the rightState data to result
+        auto* rightUniqState = reinterpret_cast<TUniqState*>(rightState->Data.String);
+        auto* resultUniqState = reinterpret_cast<TUniqState*>(result->Data.String);
+
+        // Copy the uniq state contents
+        resultUniqState->Size = rightUniqState->Size;
+        resultUniqState->SamplingDegree = rightUniqState->SamplingDegree;
+        resultUniqState->BufferSizePower = rightUniqState->BufferSizePower;
+        resultUniqState->HasSentinel = rightUniqState->HasSentinel;
+
+        auto bufferSize = rightUniqState->BufferSize();
+        memcpy(resultUniqState->Buffer, rightUniqState->Buffer, bufferSize * sizeof(uint32_t));
+        return;
+    }
+
     uniq_merge(context, result, leftState, rightState);
 }
 
@@ -373,6 +394,27 @@ extern "C" void uniq_merge_state_merge(
     TUnversionedValue* leftState,
     TUnversionedValue* rightState)
 {
+    if (rightState->Type == EValueType::Null) {
+        *result = *leftState;
+        return;
+    }
+    if (leftState->Type == EValueType::Null) {
+        uniq_init(context, result);
+        // Copy the rightState data to result
+        auto* rightUniqState = reinterpret_cast<TUniqState*>(rightState->Data.String);
+        auto* resultUniqState = reinterpret_cast<TUniqState*>(result->Data.String);
+
+        // Copy the uniq state contents
+        resultUniqState->Size = rightUniqState->Size;
+        resultUniqState->SamplingDegree = rightUniqState->SamplingDegree;
+        resultUniqState->BufferSizePower = rightUniqState->BufferSizePower;
+        resultUniqState->HasSentinel = rightUniqState->HasSentinel;
+
+        auto bufferSize = rightUniqState->BufferSize();
+        memcpy(resultUniqState->Buffer, rightUniqState->Buffer, bufferSize * sizeof(uint32_t));
+        return;
+    }
+
     uniq_merge(context, result, leftState, rightState);
 }
 
